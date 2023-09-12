@@ -2,8 +2,8 @@ const KEY = "ck_8f86f3fb005d4794534ae27a3041a8aa0ee8bd26";
 const SECRET = "cs_d95fd78ddca6e5feaba93d084890273e232e03ea";
 const DOMAIN = "http://neel.local";
 const EXT = "/wp-json/wc/v3"; // extension
-let siGlobalId; // select item global id
-let atcGlobalId;  // add to cart global id
+let siGlobalIds = []; // select item global id
+let atcGlobalIds = [];  // add to cart global id
 let raceBlocker = "false";
 
 
@@ -15,18 +15,18 @@ let raceBlocker = "false";
 
 window.addEventListener("beforeunload", async function (e) {
 
-  if (siGlobalId) {
+  if (siGlobalIds > 0) {
     let operation = "select_item";
-    let dlContent = await getDLReadyContent(pId, operation);
+    let dlContent = await getDLReadyContent(siGlobalIds, operation);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
     raceBlocker = "true";
   }
 
-  if (atcGlobalId) {
+  if (atcGlobalIds > 0) {
     let operation = "add_to_cart";
-    let dlContent = await getDLReadyContent(pId, operation);
+    let dlContent = await getDLReadyContent(atcGlobalIds, operation);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -57,9 +57,11 @@ window.onclick = async function(e) {
   if (el.closest(".ga-wc-product") !== null) {
     let parentEl = el.closest(".ga-wc-product");  // Ta linia zwróci nasz parent element, który zawiera atrybut product-id
     let pId = parentEl.getAttribute("product-id");
-    siGlobalId = pId;
+    let pIds = [];
+    pIds.push(pId);
+    siGlobalIds = pIds;
     let operation = "select_item";
-    let dlContent = await getDLReadyContent(pId, operation);
+    let dlContent = await getDLReadyContent(pIds, operation);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -72,10 +74,12 @@ window.onclick = async function(e) {
     if (!pId) { // w innym wypadku bedzie to przycisk na pozostalych stronach i musimy znalezc atrybut data-product_id
       pId = el.dataset.product_id;
     }
-    atcGlobalId = pId; // nasza zmienna globalna, ktora bedzie potrzebna do funkcji z listenerem beforeunload
+    let pIds = [];
+    pIds.push(pId);
+    atcGlobalIds = pIds; // nasza zmienna globalna, ktora bedzie potrzebna do funkcji z listenerem beforeunload
     // \/   następnie standardowy zestaw instrukcji do wypchania danych oraz beforeunload'a
     let operation = "add_to_cart";
-    let dlContent = await getDLReadyContent(pId, operation);
+    let dlContent = await getDLReadyContent(pIds, operation);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -99,8 +103,10 @@ window.onload = async function(e) {
     let htmlElId = el.id;
     let arr = htmlElId.split("-");
     let pId = arr[1];
+    let pIds = [];
+    pIds.push(pId);
     let operation = "view_item";
-    let dlContent = await getDLReadyContent(pId, operation);
+    let dlContent = await getDLReadyContent(pIds, operation);
     pushToDataLayer(dlContent);
   }
 
@@ -116,7 +122,7 @@ window.onload = async function(e) {
       }
     }
     let operation = "view_item_list";
-    let dlContent = await getDLReadyContent(pId, operation);
+    let dlContent = await getDLReadyContent(pIds, operation);
     pushToDataLayer(dlContent);
   }
 
@@ -281,7 +287,7 @@ function prepareDLItems(dataList, operation) {
 
   }
 
-  return item;
+  return items;
 }
 
 
