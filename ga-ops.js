@@ -4,6 +4,7 @@ const DOMAIN = "http://neel.local";
 const EXT = "/wp-json/wc/v3"; // extension
 let siGlobalIds = []; // select item global id
 let atcGlobalIds = [];  // add to cart global id
+let variationGlobal = "";
 let raceBlocker = "false";
 
 
@@ -67,6 +68,11 @@ window.onclick = async function(e) {
     atcGlobalIds = pIds; // nasza zmienna globalna, ktora bedzie potrzebna do funkcji z listenerem beforeunload
     // \/   następnie standardowy zestaw instrukcji do wypchania danych oraz beforeunload'a
     let operation = "add_to_cart";
+    let variation = "0";
+    if (document.querySelector(".variation_id")) {
+      variation = document.querySelector(".variation_id").getAttribute("value");
+    }
+    variationGlobal = variation;
     let dlContent = await getDLReadyContent(pIds, operation);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
