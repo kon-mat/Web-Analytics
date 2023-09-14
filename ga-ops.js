@@ -8,11 +8,6 @@ let raceBlocker = "false";
 
 
 
-
-
-
-// --- EventListener "beforeunload" to send event data to GTM if page reloads ---
-
 window.addEventListener("beforeunload", async function (e) {
 
   if (siGlobalIds > 0) {
@@ -36,13 +31,6 @@ window.addEventListener("beforeunload", async function (e) {
 });
 
 
-
-
-
-
-
-
-// --- OnClick functions (set global variables values) ---
 
 window.onclick = async function(e) {
 
@@ -89,9 +77,10 @@ window.onclick = async function(e) {
 
 }
 
-// --- Using datalayer to push data ---
+
 
 window.onload = async function(e) {
+
   var cartSummary = document.getElementById("site-header-cart");
   cartSummary.addEventListener("mouseenter", dataLayerOperation);
 
@@ -134,10 +123,25 @@ window.onload = async function(e) {
 
 
 function dataLayerOperation() {
+
   dataLayer.push({
     "event": "summary_cart_seen",
     "page": window.location.pathname 
   });
+
+}
+
+
+function populateDynamicData(ids) {
+
+  for (let i = 0; i < ids.length; i++) {
+    let info = {};
+    info.index = i + 1;  // lepiej zacząć od jednego, ponieważ dane mogą być wykorzystywane np. przez marketerów
+    info.item_list_id = window.location.pathname; // dpbrą praktyką jest wykorzystanie location jako id (część linku po domenie)
+    info.item_list_name = window.location.pathname;
+    sessionStorage.setItem(ids[i], JSON.stringify(info)); // w session storage mozemy zapisywac wylacznie string, wiec wykorzystujemy stringify do zapisania naszych danych
+  }
+
 }
 
 
@@ -148,8 +152,10 @@ function dataLayerOperation() {
 
 
 function pushToDataLayer(dataReady) {
+
   dataLayer.push({ecommerce: null});
   dataLayer.push(dataReady);
+
 }
 
 
@@ -167,6 +173,7 @@ async function getDLReadyContent(pIds, operation) {
   // format it the way datalayer needs
   let dlContent = structureForDL(dataList, operation);
   return dlContent;
+
 }
 
 
@@ -178,6 +185,7 @@ function prepareRESTURL(pId = -1) {
     need = "/products/" + pId;
   }
   return need;
+
 }
 
 
@@ -189,6 +197,7 @@ function structureForDL(dataList, operation) {
   // create the datalayer object
   let dlContent = structureDataForDL(dlItemsData, operation);
   return dlContent;
+
 }
 
 
@@ -202,6 +211,7 @@ function structureDataForDL(dlItemsData, operation) {
   dlObj.ecommerce.items = dlItemsData;
 
   return dlObj;
+
 }
 
 
@@ -213,17 +223,30 @@ function prepareDLItems(dataList, operation) {
   for (let i = 0; i < dataList.length; i++) {
     
     let data = dataList[i];
+    let itemListId = "none";
+    let itemListName = "none";
+    let position = -1; // brak pozycji = -1
+
+    let info = sessionStorage.getItem(data.id);
+
+    if (info) {
+      info = JSON.parse(info);
+      itemListId = info.item_list_id;
+      itemListName = info.item_list_name;
+      position = info.index;
+    }
+
     let item = {};
     item.item_id = data.id;
     item.item_name = data.name;
     item.affiliation = "Online Store";  // inaczej sklep
     // coupon = "SUMMER_FUN";
     // discount = 2.22;
-    item.index = 1;
+    item.index = position;
     item.item_brand = "Neel";
     item.item_category = data.categories[0].name;
-    // item_list_id = "related_products";
-    // item_list_name = "Related Products"; // nazwa listy z której użytkownik dotarł do produktu
+    item.item_list_id = itemListId;
+    item.item_list_name = itemListName; // nazwa listy z której użytkownik dotarł do produktu
     // item_variant = "green";
     item.price = data.price;
     item.quantity = 1
@@ -232,6 +255,7 @@ function prepareDLItems(dataList, operation) {
   }
 
   return items;
+
 }
 
 
@@ -260,10 +284,12 @@ async function fetchFromRest(need = "/products") {
   let resJSON = await res.json();
   console.log(resJSON);
   return resJSON;
+
 }
 
 
 function generateSignature(ts, nonce, authType, version, need) {
+
   const secretPrepared = SECRET + "&";
   let base = "GET&" +
               encodeURIComponent(DOMAIN + EXT + need) + "&" +
@@ -275,10 +301,12 @@ function generateSignature(ts, nonce, authType, version, need) {
   let signature = CryptoJS.HmacSHA1(base, secretPrepared);
   let signB64 = signature.toString(CryptoJS.enc.Base64);
   return encodeURIComponent(signB64);
+
 }
 
 
 function getNonceString(length) {
+
   let nonce = "";
   const options = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -286,6 +314,7 @@ function getNonceString(length) {
     nonce += options.charAt(Math.floor(Math.random() * options.length));
   }
   return nonce;
+
 }
 
 
