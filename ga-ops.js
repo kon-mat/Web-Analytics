@@ -89,8 +89,6 @@ window.onclick = async function(e) {
 
 }
 
-
-
 // --- Using datalayer to push data ---
 
 window.onload = async function(e) {
@@ -121,6 +119,8 @@ window.onload = async function(e) {
         pIds.push(pId);
       }
     }
+
+    populateDynamicData(pIds);
     let operation = "view_item_list";
     let dlContent = await getDLReadyContent(pIds, operation);
     pushToDataLayer(dlContent);
@@ -129,10 +129,8 @@ window.onload = async function(e) {
 }
 
 
-function pushToDataLayer(dataReady) {
-  dataLayer.push({ecommerce: null});
-  dataLayer.push(dataReady);
-}
+
+//**************************[ HELPER FUNCTIONS ]**************************
 
 
 function dataLayerOperation() {
@@ -146,8 +144,96 @@ function dataLayerOperation() {
 
 
 
+//**************************[ DATALAYER PUSH FRAMEWORK ]**************************
 
-// --- Implement WooCommerce REST API Authentication ---
+
+function pushToDataLayer(dataReady) {
+  dataLayer.push({ecommerce: null});
+  dataLayer.push(dataReady);
+}
+
+
+async function getDLReadyContent(pIds, operation) {
+  
+  let dataList = [];
+  for (let i = 0; i < pIds.length; i++) {
+    // need url
+    let need = prepareRESTURL(pIds[i]);
+    // fetch function
+    let data = await fetchFromRest(need);
+    dataList.push(data);
+  }
+
+  // format it the way datalayer needs
+  let dlContent = structureForDL(dataList, operation);
+  return dlContent;
+}
+
+
+function prepareRESTURL(pId = -1) {
+
+  let need = "";
+
+  if (pId !== -1) {
+    need = "/products/" + pId;
+  }
+  return need;
+}
+
+
+function structureForDL(dataList, operation) {
+
+  // create the items object
+  let dlItemsData = prepareDLItems(dataList, operation);
+
+  // create the datalayer object
+  let dlContent = structureDataForDL(dlItemsData, operation);
+  return dlContent;
+}
+
+
+function structureDataForDL(dlItemsData, operation) {
+  
+  let dlObj = {};
+  dlObj.event = operation;
+  dlObj.ecommerce = {};
+  dlObj.ecommerce.currency = "USD";
+  dlObj.ecommerce.value = 7.77;
+  dlObj.ecommerce.items = dlItemsData;
+
+  return dlObj;
+}
+
+
+function prepareDLItems(dataList, operation) {
+
+  let items = [];
+
+  // Every loop generate informations about one item
+  for (let i = 0; i < dataList.length; i++) {
+    
+    let data = dataList[i];
+    let item = {};
+    item.item_id = data.id;
+    item.item_name = data.name;
+    item.affiliation = "Online Store";  // inaczej sklep
+    // coupon = "SUMMER_FUN";
+    // discount = 2.22;
+    item.index = 1;
+    item.item_brand = "Neel";
+    item.item_category = data.categories[0].name;
+    // item_list_id = "related_products";
+    // item_list_name = "Related Products"; // nazwa listy z której użytkownik dotarł do produktu
+    // item_variant = "green";
+    item.price = data.price;
+    item.quantity = 1
+    items.push(item);
+
+  }
+
+  return items;
+}
+
 
 async function fetchFromRest(need = "/products") {
 
@@ -206,88 +292,10 @@ function getNonceString(length) {
 
 
 
-// --- Creating JS Framework for Data Collection ---
-
-async function getDLReadyContent(pIds, operation) {
-  
-  let dataList = [];
-  for (let i = 0; i < pIds.length; i++) {
-    // need url
-    let need = prepareRESTURL(pIds[i]);
-    // fetch function
-    let data = await fetchFromRest(need);
-    dataList.push(data);
-  }
-
-  // format it the way datalayer needs
-  let dlContent = structureForDL(dataList, operation);
-  return dlContent;
-}
 
 
-function prepareRESTURL(pId = -1) {
-
-  let need = "";
-
-  if (pId !== -1) {
-    need = "/products/" + pId;
-  }
-  return need;
-}
 
 
-function structureForDL(dataList, operation) {
 
-  // create the items object
-  let dlItemsData = prepareDLItems(dataList, operation);
-
-  // create the datalayer object
-  let dlContent = structureDataForDL(dlItemsData, operation);
-
-  return dlContent;
-}
-
-
-function structureDataForDL(dlItemsData, operation) {
-  
-  let dlObj = {};
-  dlObj.event = operation;
-  dlObj.ecommerce = {};
-  dlObj.ecommerce.currency = "USD";
-  dlObj.ecommerce.value = 7.77;
-  dlObj.ecommerce.items = dlItemsData;
-
-  return dlObj;
-}
-
-
-function prepareDLItems(dataList, operation) {
-
-  let items = [];
-
-  // Every loop generate informations about one item
-  for (let i = 0; i < dataList.length; i++) {
-    
-    let data = dataList[i];
-    let item = {};
-    item.item_id = data.id;
-    item.item_name = data.name;
-    item.affiliation = "Online Store";  // inaczej sklep
-    // coupon = "SUMMER_FUN";
-    // discount = 2.22;
-    item.index = 1;
-    item.item_brand = "Neel";
-    item.item_category = data.categories[0].name;
-    // item_list_id = "related_products";
-    // item_list_name = "Related Products";
-    // item_variant = "green";
-    item.price = data.price;
-    item.quantity = 1
-    items.push(item);
-
-  }
-
-  return items;
-}
 
 
