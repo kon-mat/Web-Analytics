@@ -4,7 +4,8 @@ const DOMAIN = "http://neel.local";
 const EXT = "/wp-json/wc/v3"; // extension
 let siGlobalIds = []; // select item global id
 let atcGlobalIds = [];  // add to cart global id
-let variationGlobal = "";
+let globalVariations = [];
+let globalVariationPrices = [];
 let raceBlocker = "false";
 
 
@@ -13,7 +14,7 @@ window.addEventListener("beforeunload", async function (e) {
 
   if (siGlobalIds > 0) {
     let operation = "select_item";
-    let dlContent = await getDLReadyContent(siGlobalIds, operation);
+    let dlContent = await getDLReadyContent(siGlobalIds, operation, globalVariations, globalVariationPrices);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -22,7 +23,7 @@ window.addEventListener("beforeunload", async function (e) {
 
   if (atcGlobalIds > 0) {
     let operation = "add_to_cart";
-    let dlContent = await getDLReadyContent(atcGlobalIds, operation);
+    let dlContent = await getDLReadyContent(atcGlobalIds, operation, globalVariations, globalVariationPrices);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -50,7 +51,11 @@ window.onclick = async function(e) {
     pIds.push(pId);
     siGlobalIds = pIds;
     let operation = "select_item";
-    let dlContent = await getDLReadyContent(pIds, operation);
+    let variations = [-1];
+    let variationPrices = [-1];
+    globalVariations = variations;
+    globalVariationPrices = variationPrices;
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -68,12 +73,18 @@ window.onclick = async function(e) {
     atcGlobalIds = pIds; // nasza zmienna globalna, ktora bedzie potrzebna do funkcji z listenerem beforeunload
     // \/   następnie standardowy zestaw instrukcji do wypchania danych oraz beforeunload'a
     let operation = "add_to_cart";
-    let variation = "0";
+    let variations = [];
+    let variationPrices = [];
     if (document.querySelector(".variation_id")) {
-      variation = document.querySelector(".variation_id").getAttribute("value");
+      variations.push(document.querySelector(".variation_id").getAttribute("value"));
+      variationPrices.push(document.querySelector(".woocommerce-variation-price>.price>.woocommerce-Price-amount").dataset.price);
+    } else {
+      variations.push(-1);
+      variationPrices.push(-1);
     }
-    variationGlobal = variation;
-    let dlContent = await getDLReadyContent(pIds, operation);
+    globalVariations = variations;
+    globalVariationPrices = variationPrices;
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -98,26 +109,32 @@ window.onload = async function(e) {
     let pId = arr[1];
     let pIds = [];
     pIds.push(pId);
+    let variations = [-1];  // poniewaz mamy tutaj wylacznie jeden produkty, to nadajemy wartosc
+    let variationPrices = [-1];  // poniewaz mamy tutaj wylacznie jeden produkty, to nadajemy wartosc
     let operation = "view_item";
-    let dlContent = await getDLReadyContent(pIds, operation);
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
     pushToDataLayer(dlContent);
   }
 
   // View Item List
   let els = document.querySelectorAll(".ga-wc-product");
   let pIds = [];
+  let variations = [];  // lista id naszych wariantoow
+  let variationPrices = [];  // lista cen naszych wariantow
 
   if (els.length > 0) {
     for (let i = 0; i < els.length; i++) {
       let pId = els[i].getAttribute("product-id");
       if (!pIds.includes(pId)) {
         pIds.push(pId);
+        variations.push(-1);
+        variationPrices.push(-1);
       }
     }
 
     populateDynamicData(pIds);
     let operation = "view_item_list";
-    let dlContent = await getDLReadyContent(pIds, operation);
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
     pushToDataLayer(dlContent);
   }
 
@@ -165,7 +182,7 @@ function pushToDataLayer(dataReady) {
 }
 
 
-async function getDLReadyContent(pIds, operation) {
+async function getDLReadyContent(pIds, operation, variations, variationPrices) {
   
   let dataList = [];
   for (let i = 0; i < pIds.length; i++) {
@@ -177,7 +194,7 @@ async function getDLReadyContent(pIds, operation) {
   }
 
   // format it the way datalayer needs
-  let dlContent = structureForDL(dataList, operation);
+  let dlContent = structureForDL(dataList, operation, variations, variationPrices);
   return dlContent;
 
 }
@@ -198,7 +215,7 @@ function prepareRESTURL(pId = -1) {
 function structureForDL(dataList, operation) {
 
   // create the items object
-  let dlItemsData = prepareDLItems(dataList, operation);
+  let dlItemsData = prepareDLItems(dataList, operation, variations, variationPrices);
 
   // create the datalayer object
   let dlContent = structureDataForDL(dlItemsData, operation);
@@ -221,18 +238,26 @@ function structureDataForDL(dlItemsData, operation) {
 }
 
 
-function prepareDLItems(dataList, operation) {
+function prepareDLItems(dataList, operation, variations, variationPrices) {
 
   let items = [];
 
   // Every loop generate informations about one item
   for (let i = 0; i < dataList.length; i++) {
     
+    let variation = variations[i];
+    let price = -1;
+
+    if (parseInt(variationPrices[i]) !== -1) {
+      price = variationPrices[i];
+    } else {
+      price = data.price;
+    }
+
     let data = dataList[i];
     let itemListId = "none";
     let itemListName = "none";
     let position = -1; // brak pozycji = -1
-
     let info = sessionStorage.getItem(data.id);
 
     if (info) {
@@ -253,8 +278,8 @@ function prepareDLItems(dataList, operation) {
     item.item_category = data.categories[0].name;
     item.item_list_id = itemListId;
     item.item_list_name = itemListName; // nazwa listy z której użytkownik dotarł do produktu
-    // item_variant = "green";
-    item.price = data.price;
+    item.item_variant = variation;
+    item.price = price;
     item.quantity = 1
     items.push(item);
 

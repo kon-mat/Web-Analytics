@@ -256,3 +256,53 @@ public\wp-content\plugins\woocommerce\templates\single-product\add-to-cart\varia
 	<input type="hidden" name="product_id" value="<?php echo absint( $product->get_id() ); ?>" />
 	<input type="hidden" name="variation_id" class="variation_id" value="0" />
 </div>
+
+
+
+
+
+
+
+
+======[ WP wc-formatting-functions.php - Data Collection add variation price into attribute ]======
+public\wp-content\plugins\woocommerce\includes\wc-formatting-functions.php
+
+
+	/**
+	 * Filter formatted price.
+	 *
+	 * @param float        $formatted_price    Formatted price.
+	 * @param float        $price              Unformatted price.
+	 * @param int          $decimals           Number of decimals.
+	 * @param string       $decimal_separator  Decimal separator.
+	 * @param string       $thousand_separator Thousand separator.
+	 * @param float|string $original_price     Original price as float, or empty string. Since 5.0.0.
+	 */
+	$price = apply_filters( 'formatted_woocommerce_price', number_format( $price, $args['decimals'], $args['decimal_separator'], $args['thousand_separator'] ), $price, $args['decimals'], $args['decimal_separator'], $args['thousand_separator'], $original_price );
+
+	if ( apply_filters( 'woocommerce_price_trim_zeros', false ) && $args['decimals'] > 0 ) {
+		$price = wc_trim_zeros( $price );
+	}
+
+	$formatted_price = ( $negative ? '-' : '' ) . sprintf( $args['price_format'], '<span class="woocommerce-Price-currencySymbol">' . get_woocommerce_currency_symbol( $args['currency'] ) . '</span>', $price );
+	$return          = '<span class="woocommerce-Price-amount amount" data-price="'.$price.'"><bdi>' . $formatted_price . '</bdi></span>';
+
+	if ( $args['ex_tax_label'] && wc_tax_enabled() ) {
+		$return .= ' <small class="woocommerce-Price-taxLabel tax_label">' . WC()->countries->ex_tax_or_vat() . '</small>';
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
