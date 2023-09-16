@@ -9,6 +9,23 @@ let globalVariationPrices = [];
 let raceBlocker = "false";
 
 
+var observer = new MutationObserver(async function(mutations) {
+
+  // jeżei nasz event zostaje odpalony wiecej, niz jeden raz (byc moze zmiana atrybutu odbywa sie podwojnie), mozemy wykorzystac ponizsza sztuczke ze zmienna
+  let runTimes = 0;
+  // pętla która sprawdzimy w ktorym elemencie powstala zmiana ceny
+  for (let i = 0; i < mutations.length; i++) {
+    if (mutations[i].type === "attributes") { // jezeli zmiana powstala w jakimkolwiek atrybucie, to typ bedzie rowny attirbute
+      if (runTimes === 0) {
+        runTimes = 1;
+        executeViewItem();
+      }
+    }
+  }
+
+});
+
+
 
 window.addEventListener("beforeunload", async function (e) {
 
@@ -101,19 +118,15 @@ window.onload = async function(e) {
   var cartSummary = document.getElementById("site-header-cart");
   cartSummary.addEventListener("mouseenter", dataLayerOperation);
 
+  // przy zaladowaniu strony musimy dodac naszego oberwatora dla zmian variation
+  let variationEl = document.querySelector(".variation_id");
+  if (variationEl) {
+    observer.observe(variationEl, {attributes: true});
+  }
+
   // View Item
   if (window.location.pathname.includes("/product/")) {
-    let el = document.querySelector(".type-product");
-    let htmlElId = el.id;
-    let arr = htmlElId.split("-");
-    let pId = arr[1];
-    let pIds = [];
-    pIds.push(pId);
-    let variations = [-1];  // poniewaz mamy tutaj wylacznie jeden produkty, to nadajemy wartosc
-    let variationPrices = [-1];  // poniewaz mamy tutaj wylacznie jeden produkty, to nadajemy wartosc
-    let operation = "view_item";
-    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
-    pushToDataLayer(dlContent);
+    executeViewItem();
   }
 
   // View Item List
@@ -168,6 +181,31 @@ function populateDynamicData(ids) {
 }
 
 
+async function executeViewItem() {
+  let el = document.querySelector(".type-product");
+  let htmlElId = el.id;
+  let arr = htmlElId.split("-");
+  let pId = arr[1];
+  let pIds = [];
+  pIds.push(pId);
+
+  let variations = [];
+  let variationPrices = [];
+  let variationEl = document.querySelector(".variation_id");
+  let variationPricesEl = document.querySelector(".woocommerce-variation-price>.price>.woocommerce-Price-amount");
+
+  if (variationPricesEl) {
+    variations.push(variationEl.getAttribute("value"));
+    variationPrices.push(variationPricesEl.dataset.price);
+  } else {
+    variations.push(-1);
+    variationPrices.push(-1);
+  }
+
+  let operation = "view_item";
+  let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
+  pushToDataLayer(dlContent);
+}
 
 
 
@@ -212,7 +250,7 @@ function prepareRESTURL(pId = -1) {
 }
 
 
-function structureForDL(dataList, operation) {
+function structureForDL(dataList, operation, variations, variationPrices) {
 
   // create the items object
   let dlItemsData = prepareDLItems(dataList, operation, variations, variationPrices);
@@ -229,8 +267,8 @@ function structureDataForDL(dlItemsData, operation) {
   let dlObj = {};
   dlObj.event = operation;
   dlObj.ecommerce = {};
-  dlObj.ecommerce.currency = "USD";
-  dlObj.ecommerce.value = 7.77;
+  dlObj.ecommerce.currency = "USD"; // ### do zaimplementowania
+  dlObj.ecommerce.value = 7.77; // ### do zaimplementowania
   dlObj.ecommerce.items = dlItemsData;
 
   return dlObj;
@@ -245,6 +283,7 @@ function prepareDLItems(dataList, operation, variations, variationPrices) {
   // Every loop generate informations about one item
   for (let i = 0; i < dataList.length; i++) {
     
+    let data = dataList[i];
     let variation = variations[i];
     let price = -1;
 
@@ -254,7 +293,6 @@ function prepareDLItems(dataList, operation, variations, variationPrices) {
       price = data.price;
     }
 
-    let data = dataList[i];
     let itemListId = "none";
     let itemListName = "none";
     let position = -1; // brak pozycji = -1
