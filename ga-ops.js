@@ -192,8 +192,44 @@ window.onload = async function(e) {
     }
   }
 
+  // Order Placed
+  if (window.location.pathname.includes("/order-received/")) {
+    let brokenPath = window.location.pathname.split("/"); // w celu pobrania id zamowienia rozdzielamy nasz url
+    let orderId = brokenPath[3];  // na trzecim miejscu po rozdzieleniu znajduje sie orderId
+    operation = "purchase";
+    let orderContent = await getOrderData(orderId);
+    let orderContentForDL = prepareOrderData(orderContent);
+    console.log(orderContentForDL);
+  }
 
 }
+
+
+
+async function getOrderData(oId) {
+
+  let need = "/orders/" + oId;
+  let data = await fetchFromREST(need);
+  return data;
+
+}
+
+
+function prepareOrderData(orderContent) {
+  
+  let order = {};
+  order.transaction_id = orderContent.id;
+  order.affiliation = "Online Store";
+  order.value = orderContent.total;
+  order.tax = orderContent.total_tax;
+  order.shipping = orderContent.shipping_total;
+  order.currency = orderContent.currency;
+  order.discount_toal = orderContent.discount_total;
+  order.payment_method = orderContent.payment_method;
+  return order;
+
+}
+
 
 
 
@@ -270,7 +306,7 @@ async function getDLReadyContent(pIds, operation, variations, variationPrices, q
     // need url
     let need = prepareRESTURL(pIds[i]);
     // fetch function
-    let data = await fetchFromRest(need);
+    let data = await fetchFromREST(need);
     dataList.push(data);
   }
 
@@ -310,10 +346,7 @@ function structureDataForDL(dlItemsData, operation) {
   let dlObj = {};
   dlObj.event = operation;
   dlObj.ecommerce = {};
-  dlObj.ecommerce.currency = "USD"; // ### do zaimplementowania
-  dlObj.ecommerce.value = 7.77; // ### do zaimplementowania
   dlObj.ecommerce.items = dlItemsData;
-
   return dlObj;
 
 }
@@ -354,6 +387,7 @@ function prepareDLItems(dataList, operation, variations, variationPrices, quanti
     item.item_name = data.name;
     item.affiliation = "Online Store";  // inaczej sklep
     // coupon = "SUMMER_FUN";
+    item.currency = "USD";
     // discount = 2.22;
     item.index = position;
     item.item_brand = "Neel";
@@ -372,7 +406,7 @@ function prepareDLItems(dataList, operation, variations, variationPrices, quanti
 }
 
 
-async function fetchFromRest(need = "/products") {
+async function fetchFromREST(need = "/products") {
 
   // nonce
   const nonce = getNonceString(9);
