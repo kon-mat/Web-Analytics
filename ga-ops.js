@@ -199,7 +199,28 @@ window.onload = async function(e) {
     operation = "purchase";
     let orderContent = await getOrderData(orderId);
     let orderContentForDL = prepareOrderData(orderContent);
-    console.log(orderContentForDL);
+    let lineItems = orderContent.line_items;
+    let pIds = [];
+    let variations = [];
+    let variationPrices = [];
+    let quantities = [];
+
+    for (let i = 0; i < lineItems.length; i++) {
+      pIds.push(lineItems[i].product_id);
+      quantities.push(lineItems[i].quantity);
+      let variation = lineItems[i].variation_id;
+
+      if (parseInt(variation) > 0) {
+        variations.push(variation);
+        variationPrices.push(lineItems[i].price);
+      } else {
+        variations.push(-1);
+        variationPrices.push(-1);
+      }
+    }
+
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities, orderContentForDL);
+    pushToDataLayer(dlContent);
   }
 
 }
@@ -224,7 +245,7 @@ function prepareOrderData(orderContent) {
   order.tax = orderContent.total_tax;
   order.shipping = orderContent.shipping_total;
   order.currency = orderContent.currency;
-  order.discount_toal = orderContent.discount_total;
+  order.discount_total = orderContent.discount_total;
   order.payment_method = orderContent.payment_method;
   return order;
 
@@ -299,7 +320,7 @@ function pushToDataLayer(dataReady) {
 }
 
 
-async function getDLReadyContent(pIds, operation, variations, variationPrices, quantities) {
+async function getDLReadyContent(pIds, operation, variations, variationPrices, quantities, orderContentForDL) {
   
   let dataList = [];
   for (let i = 0; i < pIds.length; i++) {
@@ -311,7 +332,7 @@ async function getDLReadyContent(pIds, operation, variations, variationPrices, q
   }
 
   // format it the way datalayer needs
-  let dlContent = structureForDL(dataList, operation, variations, variationPrices, quantities);
+  let dlContent = structureForDL(dataList, operation, variations, variationPrices, quantities, orderContentForDL);
   return dlContent;
 
 }
@@ -329,23 +350,34 @@ function prepareRESTURL(pId = -1) {
 }
 
 
-function structureForDL(dataList, operation, variations, variationPrices, quantities) {
+function structureForDL(dataList, operation, variations, variationPrices, quantities, orderContentForDL) {
 
   // create the items object
   let dlItemsData = prepareDLItems(dataList, operation, variations, variationPrices, quantities);
 
   // create the datalayer object
-  let dlContent = structureDataForDL(dlItemsData, operation);
+  let dlContent = structureDataForDL(dlItemsData, operation, orderContentForDL);
   return dlContent;
 
 }
 
 
-function structureDataForDL(dlItemsData, operation) {
+function structureDataForDL(dlItemsData, operation, orderContentForDL) {
   
   let dlObj = {};
   dlObj.event = operation;
   dlObj.ecommerce = {};
+  if (orderContentForDL) {  // ten blok wykonamy wylacznie, gdy argument orderContentForDL (nie wszystkie eventy wymagaja tego obiektu)
+    dlObj.ecommerce.transaction_id = orderContentForDL.transaction_id;
+    dlObj.ecommerce.affiliation = orderContentForDL.affiliation;
+    dlObj.ecommerce.value = orderContentForDL.value;
+    dlObj.ecommerce.tax = orderContentForDL.tax;
+    dlObj.ecommerce.shipping = orderContentForDL.shipping;
+    dlObj.ecommerce.currency = orderContentForDL.currency;
+    dlObj.ecommerce.discount_total = orderContentForDL.discount_total;
+    dlObj.ecommerce.payment_method = orderContentForDL.payment_method;
+  }
+
   dlObj.ecommerce.items = dlItemsData;
   return dlObj;
 
