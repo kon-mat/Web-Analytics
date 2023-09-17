@@ -115,6 +115,27 @@ window.onclick = async function(e) {
     // /\
   }
 
+  // Remove from cart
+  if (className.includes("ga-wc-remove")) {
+    let pIds = [];
+    let variations = [];
+    let variationPrices = [];
+    let quantities = [];
+
+    if (el.dataset.variation_id !== el.dataset.product_id) {  // ten warunek oznacza, ze produkt posiada warianty
+      variations.push(el.dataset.variation_id);
+      variationPrices.push(el.dataset.price);
+    } else {
+      variations.push(-1);
+      variationPrices.push(-1);
+    }
+    pIds.push(el.dataset.product_id);
+    quantities.push(el.dataset.quantity);
+    operation = "remove_from_cart";
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities);
+    pushToDataLayer(dlContent);
+  }
+
 }
 
 
