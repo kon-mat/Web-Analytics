@@ -325,9 +325,91 @@ public\wp-content\plugins\woocommerce\templates\checkout\review-order.php
 
 
 
+======[ WP cart.php - Add id, quantity, variation_id, price attributes into remove item button ]======
+public\wp-content\plugins\woocommerce\templates\cart\cart.php
+
+
+
+						<td class="product-remove">
+							<?php
+								echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+									'woocommerce_cart_item_remove_link',
+									sprintf(
+										'<a href="%s" class="remove ga-wc-remove" aria-label="%s" data-product_id="%s" data-quantity="%s" data-variation_id="%s" data-price="%s" data-product_sku="%s">&times;</a>',
+										esc_url( wc_get_cart_remove_url( $cart_item_key ) ),
+										esc_html__( 'Remove this item', 'woocommerce' ),
+										esc_attr( $product_id ),
+										esc_attr( $cart_item['quantity'] ),
+										esc_attr( $_product->get_id() ),
+										esc_attr( $_product->get_price() ),
+										esc_attr( $_product->get_sku() )
+									),
+									$cart_item_key
+								);
+							?>
+						</td>
 
 
 
 
 
 
+
+======[ WP cart.php - Add id, quantity, variation_id, price attributes into quantity input ]======
+public\wp-content\plugins\woocommerce\templates\cart\cart.php
+
+
+				<li class="woocommerce-mini-cart-item <?php echo esc_attr( apply_filters( 'woocommerce_mini_cart_item_class', 'mini_cart_item', $cart_item, $cart_item_key ) ); ?>">
+					<?php
+					echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						'woocommerce_cart_item_remove_link',
+						sprintf(
+							'<a href="%s" class="remove remove_from_cart_button ga-wc-remove" aria-label="%s" data-product_id="%s" data-cart_item_key="%s" data-variation_id="%s" data-quantity="%s" data-price="%s" data-product_sku="%s">&times;</a>',
+							esc_url( wc_get_cart_remove_url( $cart_item_key ) ),
+							esc_attr__( 'Remove this item', 'woocommerce' ),
+							esc_attr( $product_id ),
+							esc_attr( $cart_item_key ),
+							esc_attr( $_product->get_id() ),
+							esc_attr( $cart_item['quantity'] ),
+							esc_attr( $_product->get_price() ),
+							esc_attr( $_product->get_sku() )
+						),
+						$cart_item_key
+					);
+					?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+						<td class="product-quantity" data-title="<?php esc_attr_e( 'Quantity', 'woocommerce' ); ?>" data-product_id="<?php echo $product_id; ?>" data-variation_id="<?php echo $_product->get_id(); ?>" data-price="<?php echo $_product->get_price(); ?>"   >
+						<?php
+						if ( $_product->is_sold_individually() ) {
+							$product_quantity = sprintf( '1 <input type="hidden" name="cart[%s][qty]" value="1" />', $cart_item_key );
+						} else {
+							$product_quantity = woocommerce_quantity_input(
+								array(
+									'input_name'   => "cart[{$cart_item_key}][qty]",
+									'input_value'  => $cart_item['quantity'],
+									'max_value'    => $_product->get_max_purchase_quantity(),
+									'min_value'    => '0',
+									'product_name' => $_product->get_name(),
+								),
+								$_product,
+								false
+							);
+						}
