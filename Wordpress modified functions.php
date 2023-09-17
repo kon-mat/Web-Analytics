@@ -1,6 +1,6 @@
 
-======[ WP functions.php - Setup User ID in the Browser Cookie ]======
-public\wp-content\themes\storefront\functions.php
+<!-- ======[ WP functions.php - Setup User ID in the Browser Cookie ]======
+public\wp-content\themes\storefront\functions.php -->
 
 function set_userid_cookie($username, $user) {
 	$userid_cookie_name = 'userId';
@@ -29,8 +29,8 @@ add_action('wp_logout', 'remove_userid_cookie');
 
 
 
-======[ WP cart.php - Set attributes for Data Collection & create Global JS Variables ]======
-public\wp-content\plugins\woocommerce\templates\cart\cart.php
+<!-- ======[ WP cart.php - Set attributes for Data Collection & create Global JS Variables ]======
+public\wp-content\plugins\woocommerce\templates\cart\cart.php -->
 
 
 		<tbody>
@@ -171,8 +171,8 @@ public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
 
 
-======[ WP wc-template-functions.php - Data Collection modify wc template functions (get id) ]======
-public\wp-content\plugins\woocommerce\includes\wc-template-functions.php
+<!-- ======[ WP wc-template-functions.php - Data Collection modify wc template functions (get id) ]======
+public\wp-content\plugins\woocommerce\includes\wc-template-functions.php -->
 
 
 if ( ! function_exists( 'woocommerce_template_loop_product_link_open' ) ) {
@@ -192,8 +192,8 @@ if ( ! function_exists( 'woocommerce_template_loop_product_link_open' ) ) {
 
 
 
-======[ WP AbstractProductGrid.php - Data Collection modify Abstract Product Grid (get id) ]======
-public\wp-content\plugins\woocommerce\packages\woocommerce-blocks\src\BlockTypes\AbstractProductGrid.php
+<!-- ======[ WP AbstractProductGrid.php - Data Collection modify Abstract Product Grid (get id) ]======
+public\wp-content\plugins\woocommerce\packages\woocommerce-blocks\src\BlockTypes\AbstractProductGrid.php -->
 
 
 		/**
@@ -227,8 +227,8 @@ public\wp-content\plugins\woocommerce\packages\woocommerce-blocks\src\BlockTypes
 
 
 
-======[ WP variation-add-to-cart-button.php - Data Collection add variation into attribute ]======
-public\wp-content\plugins\woocommerce\templates\single-product\add-to-cart\variation-add-to-cart-button.php
+<!-- ======[ WP variation-add-to-cart-button.php - Data Collection add variation into attribute ]======
+public\wp-content\plugins\woocommerce\templates\single-product\add-to-cart\variation-add-to-cart-button.php -->
 
 
 <div class="woocommerce-variation-add-to-cart variations_button">
@@ -264,8 +264,8 @@ public\wp-content\plugins\woocommerce\templates\single-product\add-to-cart\varia
 
 
 
-======[ WP wc-formatting-functions.php - Data Collection add variation price into attribute ]======
-public\wp-content\plugins\woocommerce\includes\wc-formatting-functions.php
+<!-- ======[ WP wc-formatting-functions.php - Data Collection add variation price into attribute ]======
+public\wp-content\plugins\woocommerce\includes\wc-formatting-functions.php -->
 
 
 	/**
@@ -298,8 +298,8 @@ public\wp-content\plugins\woocommerce\includes\wc-formatting-functions.php
  
 
 
-======[ WP review-order.php - Add attributes in review order items : product-id, parent-id, price, quantity ]======
-public\wp-content\plugins\woocommerce\templates\checkout\review-order.php
+<!-- ======[ WP review-order.php - Add attributes in review order items : product-id, parent-id, price, quantity ]======
+public\wp-content\plugins\woocommerce\templates\checkout\review-order.php -->
 
 
 			if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
@@ -325,8 +325,8 @@ public\wp-content\plugins\woocommerce\templates\checkout\review-order.php
 
 
 
-======[ WP cart.php - Add id, quantity, variation_id, price attributes into remove item button ]======
-public\wp-content\plugins\woocommerce\templates\cart\cart.php
+// ======[ WP cart.php - Add id, quantity, variation_id, price attributes into remove item button ]======
+// public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
 
 
@@ -355,8 +355,8 @@ public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
 
 
-======[ WP mini-cart.php - Add id, quantity, variation_id, price attributes into remove item button ]======
-public\wp-content\plugins\woocommerce\templates\cart\mini-cart.php
+// ======[ WP mini-cart.php - Add id, quantity, variation_id, price attributes into remove item button ]======
+// public\wp-content\plugins\woocommerce\templates\cart\mini-cart.php
 
 
 				<li class="woocommerce-mini-cart-item <?php echo esc_attr( apply_filters( 'woocommerce_mini_cart_item_class', 'mini_cart_item', $cart_item, $cart_item_key ) ); ?>">
@@ -393,8 +393,8 @@ public\wp-content\plugins\woocommerce\templates\cart\mini-cart.php
 
 
 
-======[ WP cart.php - Add id, quantity, variation_id, price attributes into quantity input ]======
-public\wp-content\plugins\woocommerce\templates\cart\cart.php
+// ======[ WP cart.php - Add id, quantity, variation_id, price attributes into quantity input ]======
+// public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
 						<td class="product-quantity ga-wc-quantity" data-title="<?php esc_attr_e( 'Quantity', 'woocommerce' ); ?>" data-product_id="<?php echo $product_id; ?>" data-variation_id="<?php echo $_product->get_id(); ?>" data-price="<?php echo $_product->get_price(); ?>"   >
 						<?php
@@ -423,8 +423,8 @@ public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
 
 
-======[ WP cart.php - Add ga class to update button ]======
-public\wp-content\plugins\woocommerce\templates\cart\cart.php
+// ======[ WP cart.php - Add ga class to update button ]======
+// public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
 
 					<button type="submit" class="button ga-wc-update-cart" name="update_cart" value="<?php esc_attr_e( 'Update cart', 'woocommerce' ); ?>"><?php esc_html_e( 'Update cart', 'woocommerce' ); ?></button>
