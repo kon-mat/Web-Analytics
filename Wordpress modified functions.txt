@@ -355,8 +355,8 @@ public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
 
 
-======[ WP cart.php - Add id, quantity, variation_id, price attributes into quantity input ]======
-public\wp-content\plugins\woocommerce\templates\cart\cart.php
+======[ WP mini-cart.php - Add id, quantity, variation_id, price attributes into remove item button ]======
+public\wp-content\plugins\woocommerce\templates\cart\mini-cart.php
 
 
 				<li class="woocommerce-mini-cart-item <?php echo esc_attr( apply_filters( 'woocommerce_mini_cart_item_class', 'mini_cart_item', $cart_item, $cart_item_key ) ); ?>">
@@ -393,10 +393,10 @@ public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
 
 
+======[ WP cart.php - Add id, quantity, variation_id, price attributes into quantity input ]======
+public\wp-content\plugins\woocommerce\templates\cart\cart.php
 
-
-
-						<td class="product-quantity" data-title="<?php esc_attr_e( 'Quantity', 'woocommerce' ); ?>" data-product_id="<?php echo $product_id; ?>" data-variation_id="<?php echo $_product->get_id(); ?>" data-price="<?php echo $_product->get_price(); ?>"   >
+						<td class="product-quantity ga-wc-quantity" data-title="<?php esc_attr_e( 'Quantity', 'woocommerce' ); ?>" data-product_id="<?php echo $product_id; ?>" data-variation_id="<?php echo $_product->get_id(); ?>" data-price="<?php echo $_product->get_price(); ?>"   >
 						<?php
 						if ( $_product->is_sold_individually() ) {
 							$product_quantity = sprintf( '1 <input type="hidden" name="cart[%s][qty]" value="1" />', $cart_item_key );
@@ -413,3 +413,18 @@ public\wp-content\plugins\woocommerce\templates\cart\cart.php
 								false
 							);
 						}
+
+
+
+
+
+
+
+
+
+
+======[ WP cart.php - Add ga class to update button ]======
+public\wp-content\plugins\woocommerce\templates\cart\cart.php
+
+
+					<button type="submit" class="button ga-wc-update-cart" name="update_cart" value="<?php esc_attr_e( 'Update cart', 'woocommerce' ); ?>"><?php esc_html_e( 'Update cart', 'woocommerce' ); ?></button>

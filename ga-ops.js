@@ -8,6 +8,8 @@ let globalVariations = [];
 let globalVariationPrices = [];
 let globalQuantities = [];
 let raceBlocker = "false";
+let initialQtysInCart;
+
 
 
 var observer = new MutationObserver(async function(mutations) {
@@ -145,6 +147,11 @@ window.onload = async function(e) {
   var cartSummary = document.getElementById("site-header-cart");
   cartSummary.addEventListener("mouseenter", dataLayerOperation);
 
+  // Save Cart Quantity
+  if (window.location.pathname === "/cart/") { // po zaladowaniu strony zapisujemy ilosci art. w koszyku, aby porownac je z iloscia po updacie i odpowiednio przyporzadkowac eventy (add / remove)
+    setCartQuantities();
+  }
+
   // przy zaladowaniu strony musimy dodac naszego oberwatora dla zmian variation
   let variationEl = document.querySelector(".variation_id");
   if (variationEl) {
@@ -257,6 +264,7 @@ async function getOrderData(oId) {
 }
 
 
+
 function prepareOrderData(orderContent) {
   
   let order = {};
@@ -275,7 +283,9 @@ function prepareOrderData(orderContent) {
 
 
 
+
 //**************************[ HELPER FUNCTIONS ]**************************
+
 
 
 function dataLayerOperation() {
@@ -286,6 +296,7 @@ function dataLayerOperation() {
   });
 
 }
+
 
 
 function populateDynamicData(ids) {
@@ -301,7 +312,9 @@ function populateDynamicData(ids) {
 }
 
 
+
 async function executeViewItem() {
+
   let el = document.querySelector(".type-product");
   let htmlElId = el.id;
   let arr = htmlElId.split("-");
@@ -326,11 +339,37 @@ async function executeViewItem() {
   let operation = "view_item";
   let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities);
   pushToDataLayer(dlContent);
+
 }
 
 
 
+function setCartQuantities() {
+
+  initialQtysInCart = {};
+  let qtys = document.querySelectorAll(".qty");
+  for (let i = 0; i < qtys.length; i++) {
+    let qty = qtys[i].value;
+    let qEl = qtys[i].closest(".ga-wc-quantity");
+    let prodId = qEl.dataset.product_id;
+    let variationId = qEl.dataset.variation_id;
+
+    if (variationId === prodId) { // w zaleznosci od tego czy wystepuja wariantu musimy jako indeksu uzyc odpowiedniej zmiennej
+      initialQtysInCart[prodId] = qty;
+    } else {
+      initialQtysInCart[variationId] = qty;
+    }
+  }
+  console.log(initialQtysInCart);
+
+}
+
+
+
+
+
 //**************************[ DATALAYER PUSH FRAMEWORK ]**************************
+
 
 
 function pushToDataLayer(dataReady) {
@@ -339,6 +378,7 @@ function pushToDataLayer(dataReady) {
   dataLayer.push(dataReady);
 
 }
+
 
 
 async function getDLReadyContent(pIds, operation, variations, variationPrices, quantities, orderContentForDL) {
@@ -359,6 +399,7 @@ async function getDLReadyContent(pIds, operation, variations, variationPrices, q
 }
 
 
+
 function prepareRESTURL(pId = -1) {
 
   let need = "";
@@ -371,6 +412,7 @@ function prepareRESTURL(pId = -1) {
 }
 
 
+
 function structureForDL(dataList, operation, variations, variationPrices, quantities, orderContentForDL) {
 
   // create the items object
@@ -381,6 +423,7 @@ function structureForDL(dataList, operation, variations, variationPrices, quanti
   return dlContent;
 
 }
+
 
 
 function structureDataForDL(dlItemsData, operation, orderContentForDL) {
@@ -403,6 +446,7 @@ function structureDataForDL(dlItemsData, operation, orderContentForDL) {
   return dlObj;
 
 }
+
 
 
 function prepareDLItems(dataList, operation, variations, variationPrices, quantities) {
@@ -459,6 +503,7 @@ function prepareDLItems(dataList, operation, variations, variationPrices, quanti
 }
 
 
+
 async function fetchFromREST(need = "/products") {
 
   // nonce
@@ -488,6 +533,7 @@ async function fetchFromREST(need = "/products") {
 }
 
 
+
 function generateSignature(ts, nonce, authType, version, need) {
 
   const secretPrepared = SECRET + "&";
@@ -503,6 +549,7 @@ function generateSignature(ts, nonce, authType, version, need) {
   return encodeURIComponent(signB64);
 
 }
+
 
 
 function getNonceString(length) {
