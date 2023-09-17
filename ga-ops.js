@@ -138,6 +138,11 @@ window.onclick = async function(e) {
     pushToDataLayer(dlContent);
   }
 
+  // Update Cart
+  if (className.includes("ga-wc-update-cart")) {
+    updateCart();
+  }
+
 }
 
 
@@ -350,7 +355,7 @@ function setCartQuantities() {
   let qtys = document.querySelectorAll(".qty");
   for (let i = 0; i < qtys.length; i++) {
     let qty = qtys[i].value;
-    let qEl = qtys[i].closest(".ga-wc-quantity");
+    let qEl = qtys[i].closest(".ga-wc-remove");
     let prodId = qEl.dataset.product_id;
     let variationId = qEl.dataset.variation_id;
 
@@ -360,7 +365,63 @@ function setCartQuantities() {
       initialQtysInCart[variationId] = qty;
     }
   }
-  console.log(initialQtysInCart);
+
+}
+
+
+
+function updateCart() {
+
+  let qtys = document.querySelectorAll(".qty");
+
+  for (let i = 0; i < qtys.length; i++) {
+    let qty = qtys[i].value;
+    let qEl = qtys[i].closest(".ga-wc-remove");
+    let prodId = qEl.dataset.product_id;
+    let variationId = qEl.dataset.variation_id;
+    let price = qEl.dataset.price;
+
+    let id = parseInt(prodId) === parseInt(variationId) ? prodId : variationId;
+    let initq = parseInt(initialQtysInCart[id]);  // initial quantity
+    let currq = parseInt(qty);  // current quantity
+
+    if (currq > initq) {
+      let operation = "add_to_cart";
+      let q = currq - initq;
+      updateCartSend(parseInt(prodId), parseInt(variationId), price, operation, q);
+    } else if (currq < initq) {
+      let operation = "remove_from_cart";
+      let q = initq - currq;
+      updateCartSend(parseInt(prodId), parseInt(variationId), price, operation, q);
+    } else {
+      // Do nothing
+    }
+  }
+
+}
+
+
+
+async function updateCartSend(prodId, variationId, price, operation, q) {
+
+  let pIds = [];
+  let variations = [];
+  let variationPrices = [];
+  let quantities = [];
+
+  if (prodId === variationId) {
+    variations.push(-1);
+    variationPrices.push(-1);
+  } else {
+    variations.push(variationId);
+    variationPrices.push(price);
+  }
+  pIds.push(prodId);
+  quantities.push(q);
+
+  let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities);
+  pushToDataLayer(dlContent);
+  setCartQuantities();
 
 }
 
