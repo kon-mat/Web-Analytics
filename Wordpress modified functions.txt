@@ -295,6 +295,31 @@ public\wp-content\plugins\woocommerce\includes\wc-formatting-functions.php
 
 
 
+ 
+
+
+======[ WP review-order.php - Add attributes in review order items : product-id, parent-id, price, quantity ]======
+public\wp-content\plugins\woocommerce\templates\checkout\review-order.php
+
+
+			if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+				?>
+				<tr class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ); ?>">
+					<td class="product-name ga-wc-product namme" data-product-id="<?php echo $_product->get_id();?>" data-parent-id="<?php echo $_product->get_parent_id();?>" data-price="<?php echo $_product->get_price();?> data-quantity= <?php echo $cart_item['quantity'] ?>">
+						<?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
+						<?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</td>
+					<td class="product-total">
+						<?php echo apply_filters( 'woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal( $_product, $cart_item['quantity'] ), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</td>
+				</tr>
+				<?php
+			}
+
+
+
+
 
 
 
