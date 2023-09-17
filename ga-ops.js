@@ -6,6 +6,7 @@ let siGlobalIds = []; // select item global id
 let atcGlobalIds = [];  // add to cart global id
 let globalVariations = [];
 let globalVariationPrices = [];
+let globalQuantities = [];
 let raceBlocker = "false";
 
 
@@ -31,7 +32,7 @@ window.addEventListener("beforeunload", async function (e) {
 
   if (siGlobalIds > 0) {
     let operation = "select_item";
-    let dlContent = await getDLReadyContent(siGlobalIds, operation, globalVariations, globalVariationPrices);
+    let dlContent = await getDLReadyContent(siGlobalIds, operation, globalVariations, globalVariationPrices, globalQuantities);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -40,7 +41,7 @@ window.addEventListener("beforeunload", async function (e) {
 
   if (atcGlobalIds > 0) {
     let operation = "add_to_cart";
-    let dlContent = await getDLReadyContent(atcGlobalIds, operation, globalVariations, globalVariationPrices);
+    let dlContent = await getDLReadyContent(atcGlobalIds, operation, globalVariations, globalVariationPrices, globalQuantities);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -70,9 +71,11 @@ window.onclick = async function(e) {
     let operation = "select_item";
     let variations = [-1];
     let variationPrices = [-1];
+    let quantities = [1]; // przy wyborze produktu ilosc zawsze jest rowna 1
     globalVariations = variations;
     globalVariationPrices = variationPrices;
-    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
+    globalQuantities = quantities;
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -92,6 +95,8 @@ window.onclick = async function(e) {
     let operation = "add_to_cart";
     let variations = [];
     let variationPrices = [];
+    let quantity = document.querySelector(".qty").value;  // pobieramy wartosc z inputa dla ilosci produktu
+    let quantities = [quantity];
     if (document.querySelector(".variation_id")) {
       variations.push(document.querySelector(".variation_id").getAttribute("value"));
       variationPrices.push(document.querySelector(".woocommerce-variation-price>.price>.woocommerce-Price-amount").dataset.price);
@@ -101,7 +106,8 @@ window.onclick = async function(e) {
     }
     globalVariations = variations;
     globalVariationPrices = variationPrices;
-    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
+    globalQuantities = quantities;
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities);
     if (raceBlocker === "false") {
       pushToDataLayer(dlContent);
     }
@@ -134,6 +140,7 @@ window.onload = async function(e) {
   let pIds = [];
   let variations = [];  // lista id naszych wariantoow
   let variationPrices = [];  // lista cen naszych wariantow
+  let quantities = [];
 
   if (els.length > 0) {
     for (let i = 0; i < els.length; i++) {
@@ -142,14 +149,49 @@ window.onload = async function(e) {
         pIds.push(pId);
         variations.push(-1);
         variationPrices.push(-1);
+        quantities.push(1);
       }
     }
 
     populateDynamicData(pIds);
     let operation = "view_item_list";
-    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
+    let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities);
     pushToDataLayer(dlContent);
   }
+
+  // Checkout
+  if (window.location.pathname === "/checkout/") {
+    let els = document.querySelectorAll(".ga-wc-product-name");
+    if (els.length > 0) { // jezeli strona checkout posiada jakies produkty
+      let pIds = [];
+      let variations = [];
+      let variationPrices = [];
+      let quantities = [];
+
+      for (let i = 0; i < els.length; i++) {
+        let parentId = els[i].dataset.parentId; // atrybut data-parent-id zostaje zmieniony: "data-" znika, nastepne "-" znikaja, a litery po nich zostaja zamienione na wielkie
+        let productId = els[i].dataset.productId;
+        let quantity = els[i].dataset.quantity;
+        let price = els[i].dataset.price;
+
+        if (parentId === "0") { // produkt nie posiada zadnego wariantu
+          pIds.push(productId);
+          variations.push(-1);
+          variationPrices.push(-1);
+        } else {  // produkt posiada warianty
+          pIds.push(parentId);  // w tym wypadku id produktu zostanie podane jako parent-id 
+          variations.push(productId);  // id wariantu bedzie podane jako product-id
+          variationPrices.push(price);
+        }
+        quantities.push(quantity);
+      }
+
+      operation = "begin_checkout";
+      let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities);
+      pushToDataLayer(dlContent);
+    }
+  }
+
 
 }
 
@@ -201,9 +243,10 @@ async function executeViewItem() {
     variations.push(-1);
     variationPrices.push(-1);
   }
+  let quantities = [1];
 
   let operation = "view_item";
-  let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices);
+  let dlContent = await getDLReadyContent(pIds, operation, variations, variationPrices, quantities);
   pushToDataLayer(dlContent);
 }
 
@@ -220,7 +263,7 @@ function pushToDataLayer(dataReady) {
 }
 
 
-async function getDLReadyContent(pIds, operation, variations, variationPrices) {
+async function getDLReadyContent(pIds, operation, variations, variationPrices, quantities) {
   
   let dataList = [];
   for (let i = 0; i < pIds.length; i++) {
@@ -232,7 +275,7 @@ async function getDLReadyContent(pIds, operation, variations, variationPrices) {
   }
 
   // format it the way datalayer needs
-  let dlContent = structureForDL(dataList, operation, variations, variationPrices);
+  let dlContent = structureForDL(dataList, operation, variations, variationPrices, quantities);
   return dlContent;
 
 }
@@ -250,10 +293,10 @@ function prepareRESTURL(pId = -1) {
 }
 
 
-function structureForDL(dataList, operation, variations, variationPrices) {
+function structureForDL(dataList, operation, variations, variationPrices, quantities) {
 
   // create the items object
-  let dlItemsData = prepareDLItems(dataList, operation, variations, variationPrices);
+  let dlItemsData = prepareDLItems(dataList, operation, variations, variationPrices, quantities);
 
   // create the datalayer object
   let dlContent = structureDataForDL(dlItemsData, operation);
@@ -276,7 +319,7 @@ function structureDataForDL(dlItemsData, operation) {
 }
 
 
-function prepareDLItems(dataList, operation, variations, variationPrices) {
+function prepareDLItems(dataList, operation, variations, variationPrices, quantities) {
 
   let items = [];
 
@@ -286,6 +329,7 @@ function prepareDLItems(dataList, operation, variations, variationPrices) {
     let data = dataList[i];
     let variation = variations[i];
     let price = -1;
+    let quantity = quantities[i];
 
     if (parseInt(variationPrices[i]) !== -1) {
       price = variationPrices[i];
@@ -318,7 +362,7 @@ function prepareDLItems(dataList, operation, variations, variationPrices) {
     item.item_list_name = itemListName; // nazwa listy z której użytkownik dotarł do produktu
     item.item_variant = variation;
     item.price = price;
-    item.quantity = 1
+    item.quantity = quantity;
     items.push(item);
 
   }
